@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "./lib/supabase";
+import Auth from "./components/Auth";
 
 export default function App() {
   const [cafes, setCafes] = useState([]);
@@ -9,6 +10,24 @@ export default function App() {
   const [price, setPrice] = useState("All");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [showAuth, setShowAuth] = useState(false);
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    if (!supabase) return;
+
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+    });
+
+    const {
+      data: { subscription }
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   useEffect(() => {
     async function loadCafes() {
@@ -21,17 +40,9 @@ export default function App() {
       const { data, error: fetchError } = await supabase
         .from("cafes")
         .select(`
-          id,
-          name,
-          location,
-          city,
-          category,
-          description,
-          mood_tags,
-          price_level,
-          opening_hours,
-          crowd_status,
-          cover_image_url
+          id, name, location, city, category, description,
+          mood_tags, price_level, opening_hours,
+          crowd_status, cover_image_url
         `)
         .eq("is_approved", true)
         .order("created_at", { ascending: false });
@@ -53,10 +64,7 @@ export default function App() {
       const term = search.toLowerCase();
 
       const matchesSearch = [
-        cafe.name,
-        cafe.location,
-        cafe.city,
-        cafe.category
+        cafe.name, cafe.location, cafe.city, cafe.category
       ].some((value) => value?.toLowerCase().includes(term));
 
       const matchesMood =
@@ -69,8 +77,30 @@ export default function App() {
     });
   }, [cafes, search, mood, price]);
 
+  async function handleLogout() {
+    const { error } = await supabase.auth.signOut();
+    if (error) setError(error.message);
+  }
+
   return (
     <main className="app-shell">
+      <nav className="navbar">
+        <a href="/" className="brand">CaféScape.</a>
+
+        <div className="nav-actions">
+          {user ? (
+            <>
+              <span>{user.email}</span>
+              <button onClick={handleLogout}>Logout</button>
+            </>
+          ) : (
+            <button onClick={() => setShowAuth(true)}>
+              Login / Sign up
+            </button>
+          )}
+        </div>
+      </nav>
+
       <section className="hero">
         <p className="eyebrow">YOUR CITY, YOUR COFFEE</p>
         <h1>Find your kind of café.</h1>
@@ -112,7 +142,6 @@ export default function App() {
         <h2>Explore cafés</h2>
 
         {loading && <p>Loading cafés...</p>}
-
         {error && <p role="alert">{error}</p>}
 
         {!loading && !error && filteredCafes.length === 0 && (
@@ -150,6 +179,12 @@ export default function App() {
           ))}
         </div>
       </section>
+
+      {showAuth && (
+        <div className="auth-overlay">
+          <Auth onClose={() => setShowAuth(false)} />
+        </div>
+      )}
     </main>
   );
-             }
+              }
