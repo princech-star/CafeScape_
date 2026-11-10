@@ -1,245 +1,155 @@
 
-import { useMemo, useState } from "react";
-import {
-  Search, MapPin, SlidersHorizontal, Star,
-  Heart, Clock3, ArrowRight, Coffee
-} from "lucide-react";
-import Navbar from "./components/Navbar";
-import { cafes } from "./data/cafes";
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "./lib/supabase";
 
-const moods = ["All moods", "Peaceful", "Study", "Friends", "Date", "Aesthetic"];
-const prices = ["All prices", "₹", "₹₹", "₹₹₹"];
-
-function App() {
+export default function App() {
+  const [cafes, setCafes] = useState([]);
   const [search, setSearch] = useState("");
-  const [mood, setMood] = useState("All moods");
-  const [price, setPrice] = useState("All prices");
-  const [saved, setSaved] = useState([]);
+  const [mood, setMood] = useState("All");
+  const [price, setPrice] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    async function loadCafes() {
+      if (!supabase) {
+        setError("Supabase configuration missing. Check your .env file.");
+        setLoading(false);
+        return;
+      }
+
+      const { data, error: fetchError } = await supabase
+        .from("cafes")
+        .select(`
+          id,
+          name,
+          location,
+          city,
+          category,
+          description,
+          mood_tags,
+          price_level,
+          opening_hours,
+          crowd_status,
+          cover_image_url
+        `)
+        .eq("is_approved", true)
+        .order("created_at", { ascending: false });
+
+      if (fetchError) {
+        setError(fetchError.message);
+      } else {
+        setCafes(data || []);
+      }
+
+      setLoading(false);
+    }
+
+    loadCafes();
+  }, []);
 
   const filteredCafes = useMemo(() => {
     return cafes.filter((cafe) => {
       const term = search.toLowerCase();
 
-      const matchesSearch =
-        cafe.name.toLowerCase().includes(term) ||
-        cafe.location.toLowerCase().includes(term) ||
-        cafe.category.toLowerCase().includes(term);
+      const matchesSearch = [
+        cafe.name,
+        cafe.location,
+        cafe.city,
+        cafe.category
+      ].some((value) => value?.toLowerCase().includes(term));
 
       const matchesMood =
-        mood === "All moods" || cafe.mood.includes(mood);
+        mood === "All" || cafe.mood_tags?.includes(mood);
 
       const matchesPrice =
-        price === "All prices" || cafe.price === price;
+        price === "All" || cafe.price_level === price;
 
       return matchesSearch && matchesMood && matchesPrice;
     });
-  }, [search, mood, price]);
-
-  function toggleSaved(id) {
-    setSaved((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id]
-    );
-  }
+  }, [cafes, search, mood, price]);
 
   return (
-    <div className="app-shell">
-      <Navbar />
+    <main className="app-shell">
+      <section className="hero">
+        <p className="eyebrow">YOUR CITY, YOUR COFFEE</p>
+        <h1>Find your kind of café.</h1>
+        <p>Discover real cafés around you.</p>
 
-      <main>
-        <section className="hero" id="home">
-          <div className="hero-content">
-            <span className="eyebrow">
-              <Coffee size={15} /> YOUR LITTLE CAFÉ UNIVERSE
-            </span>
+        <input
+          type="search"
+          placeholder="Search café, city or location..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </section>
 
-            <h1>
-              Find your kind
-              <br />
-              of <span>coffee corner.</span>
-            </h1>
+      <section className="filters">
+        <label>
+          Mood
+          <select value={mood} onChange={(e) => setMood(e.target.value)}>
+            <option>All</option>
+            <option>Cozy</option>
+            <option>Study</option>
+            <option>Social</option>
+            <option>Romantic</option>
+            <option>Peaceful</option>
+          </select>
+        </label>
 
-            <p>
-              From peaceful study spots to lively hangouts,
-              discover a café that matches your mood.
-            </p>
+        <label>
+          Price
+          <select value={price} onChange={(e) => setPrice(e.target.value)}>
+            <option>All</option>
+            <option>₹</option>
+            <option>₹₹</option>
+            <option>₹₹₹</option>
+          </select>
+        </label>
+      </section>
 
-            <a className="primary-button" href="#explore">
-              Explore cafés <ArrowRight size={18} />
-            </a>
+      <section className="cafe-section">
+        <h2>Explore cafés</h2>
 
-            <div className="hero-note">
-              <span>☕</span>
-              Discover. Save. Visit. Enjoy.
-            </div>
-          </div>
+        {loading && <p>Loading cafés...</p>}
 
-          <div className="hero-image-wrap">
-            <img
-              className="hero-image"
-              src="https://images.unsplash.com/photo-1445116572660-236099ec97a0?w=1200"
-              alt="Warm and cosy coffee shop interior"
-            />
-            <div className="floating-card glass">
-              <span className="floating-icon">☕</span>
-              <div>
-                <strong>Your next favourite place</strong>
-                <small>Just a discovery away</small>
+        {error && <p role="alert">{error}</p>}
+
+        {!loading && !error && filteredCafes.length === 0 && (
+          <p>No approved cafés found yet.</p>
+        )}
+
+        <div className="cafe-grid">
+          {filteredCafes.map((cafe) => (
+            <article className="cafe-card" key={cafe.id}>
+              {cafe.cover_image_url ? (
+                <img
+                  src={cafe.cover_image_url}
+                  alt={cafe.name}
+                  className="cafe-image"
+                />
+              ) : (
+                <div className="cafe-image-placeholder">
+                  Image not uploaded
+                </div>
+              )}
+
+              <div className="cafe-info">
+                <h3>{cafe.name}</h3>
+                <p>{cafe.location}, {cafe.city}</p>
+                {cafe.category && <p>{cafe.category}</p>}
+                {cafe.description && <p>{cafe.description}</p>}
+                {cafe.price_level && <p>{cafe.price_level}</p>}
+                {cafe.opening_hours && <p>{cafe.opening_hours}</p>}
+                <p>Crowd: {cafe.crowd_status}</p>
+                {cafe.mood_tags?.length > 0 && (
+                  <p>{cafe.mood_tags.join(" · ")}</p>
+                )}
               </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="explore-section" id="explore">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">LET'S FIND YOUR PLACE</span>
-              <h2>Explore cafés</h2>
-              <p>Search, discover and find your perfect vibe.</p>
-            </div>
-            <span className="result-count">
-              {filteredCafes.length} places
-            </span>
-          </div>
-
-          <div className="search-panel glass">
-            <div className="search-box">
-              <Search size={20} />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search café, food or location..."
-                aria-label="Search cafés"
-              />
-            </div>
-
-            <div className="location-note">
-              <MapPin size={17} />
-              <span>Location filters coming soon</span>
-            </div>
-          </div>
-
-          <div className="filter-heading">
-            <SlidersHorizontal size={17} />
-            <strong>Find your vibe</strong>
-          </div>
-
-          <div className="filter-group">
-            {moods.map((item) => (
-              <button
-                key={item}
-                className={`filter-chip ${mood === item ? "active" : ""}`}
-                onClick={() => setMood(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="price-filters">
-            <span>Price range</span>
-            {prices.map((item) => (
-              <button
-                key={item}
-                className={`price-chip ${price === item ? "active" : ""}`}
-                onClick={() => setPrice(item)}
-              >
-                {item}
-              </button>
-            ))}
-          </div>
-
-          <div className="cafe-grid">
-            {filteredCafes.map((cafe) => (
-              <article className="cafe-card glass" key={cafe.id}>
-                <div className="cafe-image-wrap">
-                  <img src={cafe.image} alt={cafe.name} />
-                  <button
-                    className={`save-button ${
-                      saved.includes(cafe.id) ? "saved" : ""
-                    }`}
-                    onClick={() => toggleSaved(cafe.id)}
-                    aria-label="Save café"
-                  >
-                    <Heart
-                      size={19}
-                      fill={saved.includes(cafe.id) ? "currentColor" : "none"}
-                    />
-                  </button>
-                  <span className="image-tag">{cafe.category}</span>
-                </div>
-
-                <div className="cafe-info">
-                  <div className="cafe-title-row">
-                    <h3>{cafe.name}</h3>
-                    <span className="rating">
-                      <Star size={15} fill="currentColor" />
-                      {cafe.rating}
-                    </span>
-                  </div>
-
-                  <p className="cafe-description">{cafe.description}</p>
-
-                  <div className="cafe-meta">
-                    <span><MapPin size={14} /> {cafe.location}</span>
-                    <span><Clock3 size={14} /> {cafe.hours}</span>
-                  </div>
-
-                  <div className="cafe-bottom">
-                    <strong>{cafe.price}</strong>
-                    <span className={`crowd ${cafe.crowd.toLowerCase()}`}>
-                      {cafe.crowd}
-                    </span>
-                    <button className="details-button">
-                      Details <ArrowRight size={15} />
-                    </button>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {filteredCafes.length === 0 && (
-            <div className="empty-state glass">
-              <Coffee size={32} />
-              <h3>No cafés found</h3>
-              <p>Try another search or change your filters.</p>
-              <button
-                className="text-button"
-                onClick={() => {
-                  setSearch("");
-                  setMood("All moods");
-                  setPrice("All prices");
-                }}
-              >
-                Clear all filters
-              </button>
-            </div>
-          )}
-        </section>
-
-        <section className="saved-section" id="saved">
-          <h2>Your saved cafés</h2>
-          <p>
-            {saved.length === 0
-              ? "Cafés you save will be easy to find here."
-              : `${saved.length} café(s) saved in this session.`}
-          </p>
-        </section>
-      </main>
-
-      <footer className="footer">
-        <div className="brand footer-brand">
-          <Coffee size={21} /> CaféScape
+            </article>
+          ))}
         </div>
-        <p>Made for coffee lovers and café explorers.</p>
-        <small>© 2026 CaféScape</small>
-      </footer>
-    </div>
+      </section>
+    </main>
   );
-}
-
-export default App;
-
-
+             }
