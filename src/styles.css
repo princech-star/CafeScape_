@@ -765,3 +765,87 @@ a {
 .cafe-image-wrap > img {
   display: block;
 }
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 5%;
+}
+
+.brand {
+  color: var(--clay-dark);
+  font-size: 25px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.auth-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(40, 27, 20, 0.55);
+  backdrop-filter: blur(10px);
+  overflow-y: auto;
+}
+
+.auth-card {
+  position: relative;
+  width: min(100%, 440px);
+  padding: 32px;
+  border-radius: 24px;
+  background: #fff5dc;
+  box-shadow: 0 20px 60px rgba(0,0,0,.2);
+}
+
+.auth-card form {
+  display: grid;
+  gap: 14px;
+}
+
+.auth-card input,
+.auth-card button {
+  width: 100%;
+  padding: 13px 15px;
+  border-radius: 12px;
+}
+
+.auth-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: auto !important;
+  border: none;
+  background: transparent;
+  font-size: 25px;
+  cursor: pointer;
+}
+
+.auth-error {
+  color: #a12d25;
+}
+
+.auth-message {
+  color: #27623b;
+}
+
+.auth-switch {
+  margin-top: 18px;
+}
+
+.auth-switch button {
+  width: auto;
+  border: none;
+  background: transparent;
+  color: #805037;
+  cursor: pointer;
+}
