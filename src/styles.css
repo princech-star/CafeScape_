@@ -1265,5 +1265,155 @@ a {
   border: 1px solid rgba(255, 255, 255, 0.8);
 }
 
+/* PREMIUM GLASS LOGIN POPUP */
+
+.cs-auth-overlay {
+  background: rgba(48, 32, 23, 0.42) !important;
+  backdrop-filter: blur(14px) saturate(130%);
+  -webkit-backdrop-filter: blur(14px) saturate(130%);
+}
+
+.cs-auth-card {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 42px 36px;
+  overflow: hidden;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(255, 255, 255, 0.78),
+      rgba(249, 239, 219, 0.57)
+    ) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 30px;
+
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+
+  box-shadow:
+    0 30px 90px rgba(45, 29, 19, 0.22),
+    inset 0 1px 1px rgba(255, 255, 255, 0.9);
+
+  animation: cs-glass-enter 0.35s ease both;
+}
+
+.cs-auth-card::before {
+  content: "";
+  position: absolute;
+  width: 190px;
+  height: 190px;
+  top: -100px;
+  right: -70px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
+  filter: blur(25px);
+  pointer-events: none;
+}
+
+.cs-auth-icon {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  border-radius: 19px;
+  background: linear-gradient(145deg, #76533a, #493022);
+  color: #fff3d9;
+  box-shadow: 0 9px 25px rgba(73, 48, 34, 0.2);
+}
+
+.cs-auth-card h2 {
+  position: relative;
+  color: #422d20;
+  font-family: 'Playfair Display', serif;
+  font-size: 34px;
+  letter-spacing: -0.6px;
+}
+
+.cs-auth-description {
+  position: relative;
+  color: #897461;
+  line-height: 1.8;
+}
+
+.cs-auth-form {
+  position: relative;
+  gap: 13px;
+}
+
+.cs-auth-form input {
+  min-height: 53px;
+  padding: 0 17px;
+  border: 1px solid rgba(125, 94, 66, 0.15);
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.48);
+  color: #493326;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+}
+
+.cs-auth-form input:focus {
+  border-color: rgba(151, 105, 62, 0.65);
+  background: rgba(255, 255, 255, 0.76);
+  box-shadow: 0 0 0 4px rgba(151, 105, 62, 0.08);
+}
+
+.cs-auth-form input::placeholder {
+  color: #aa9580;
+}
+
+.cs-auth-submit {
+  min-height: 53px;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #684833, #493022);
+  box-shadow: 0 10px 24px rgba(73, 48, 34, 0.2);
+}
+
+.cs-auth-close {
+  z-index: 2;
+  border: 1px solid rgba(255,255,255,.7);
+  background: rgba(255,255,255,.52);
+  backdrop-filter: blur(10px);
+  color: #634632;
+  transition: transform 0.2s, background 0.2s;
+}
+
+.cs-auth-close:hover {
+  transform: rotate(90deg);
+  background: rgba(255,255,255,.9);
+}
+
+.cs-auth-switch {
+  position: relative;
+  color: #897461;
+}
+
+.cs-auth-switch button {
+  color: #8a5d36;
+}
+
+@keyframes cs-glass-enter {
+  from {
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 640px) {
+  .cs-auth-card {
+    padding: 35px 22px;
+    border-radius: 25px;
+  }
+
+  .cs-auth-card h2 {
+    font-size: 30px;
+  }
+  }
+
   
 
