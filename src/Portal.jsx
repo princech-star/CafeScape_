@@ -212,7 +212,31 @@ export default function Portal({ user, role, onBack, onRefresh }) {
 
     setBusy(false);
   }
+async function updateMenuItem(item) {
+  setBusy(true);
+  setError("");
+  setMessage("");
 
+  const { error } = await supabase
+    .from("cafe_menu_items")
+    .update({
+      item_name: item.item_name,
+      description: item.description,
+      price: Number(item.price),
+      category: item.category,
+      image_url: item.image_url,
+    })
+    .eq("id", item.id);
+
+  if (error) {
+    setError(error.message);
+  } else {
+    setMessage("Menu item updated successfully.");
+    await loadMenu(selectedCafe);
+  }
+
+  setBusy(false);
+}
   async function toggleAvailability(item) {
     const { error } = await supabase
       .from("cafe_menu_items")
