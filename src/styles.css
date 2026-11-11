@@ -1217,5 +1217,53 @@ a {
   }
 }
   
+/* PREMIUM GLASSMORPHISM AUTH POPUP */
+
+.cs-auth-overlay {
+  background: rgba(45, 30, 20, 0.48);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.cs-auth-card {
+  position: relative;
+  width: min(440px, 100%);
+  padding: 42px 36px;
+  border: 1px solid rgba(255, 255, 255, 0.75);
+  border-radius: 28px;
+
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.78),
+    rgba(248, 239, 220, 0.58)
+  );
+
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+
+  box-shadow:
+    0 25px 70px rgba(56, 37, 29, 0.20),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+
+  text-align: center;
+}
+
+.cs-auth-form input {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(104, 75, 53, 0.16);
+  border-radius: 14px;
+}
+
+.cs-auth-form input:focus {
+  border-color: #a8794b;
+  box-shadow: 0 0 0 3px rgba(168, 121, 75, 0.12);
+  outline: none;
+}
+
+.cs-auth-close {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
   
 
