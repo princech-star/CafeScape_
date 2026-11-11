@@ -698,6 +698,31 @@ export default function Portal({ user, role, onBack, onRefresh }) {
             ))
           )}
         </section>
+      <section style={panelStyle}>
+  <h2>Approved Cafés</h2>
+
+  {cafes.filter(
+    (cafe) => cafe.approval_status === "approved"
+  ).length === 0 ? (
+    <p>No approved cafés yet.</p>
+  ) : (
+    cafes
+      .filter((cafe) => cafe.approval_status === "approved")
+      .map((cafe) => (
+        <div
+          key={cafe.id}
+          style={{
+            borderTop: "1px solid #eadfce",
+            padding: "14px 0",
+          }}
+        >
+          <strong>{cafe.name}</strong>
+          <p>{cafe.location}, {cafe.city}</p>
+          <p>Status: Approved</p>
+        </div>
+      ))
+  )}
+</section>
       )}
     </main>
   );
