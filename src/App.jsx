@@ -1,7 +1,18 @@
-
 import { useEffect, useMemo, useState } from "react";
+import {
+  Search,
+  MapPin,
+  ArrowUpRight,
+  Coffee,
+  Sparkles,
+  Menu,
+  X
+} from "lucide-react";
+
 import { supabase } from "./lib/supabase";
 import Auth from "./components/Auth";
+
+const moods = ["All", "Cozy", "Study", "Social", "Peaceful"];
 
 export default function App() {
   const [cafes, setCafes] = useState([]);
@@ -11,6 +22,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [showAuth, setShowAuth] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
   const [user, setUser] = useState(null);
 
   useEffect(() => {
@@ -32,7 +44,7 @@ export default function App() {
   useEffect(() => {
     async function loadCafes() {
       if (!supabase) {
-        setError("Supabase configuration missing. Check your .env file.");
+        setError("Supabase configuration missing. Check your environment variables.");
         setLoading(false);
         return;
       }
@@ -40,9 +52,17 @@ export default function App() {
       const { data, error: fetchError } = await supabase
         .from("cafes")
         .select(`
-          id, name, location, city, category, description,
-          mood_tags, price_level, opening_hours,
-          crowd_status, cover_image_url
+          id,
+          name,
+          location,
+          city,
+          category,
+          description,
+          mood_tags,
+          price_level,
+          opening_hours,
+          crowd_status,
+          cover_image_url
         `)
         .eq("is_approved", true)
         .order("created_at", { ascending: false });
@@ -64,7 +84,10 @@ export default function App() {
       const term = search.toLowerCase();
 
       const matchesSearch = [
-        cafe.name, cafe.location, cafe.city, cafe.category
+        cafe.name,
+        cafe.location,
+        cafe.city,
+        cafe.category
       ].some((value) => value?.toLowerCase().includes(term));
 
       const matchesMood =
@@ -78,101 +101,240 @@ export default function App() {
   }, [cafes, search, mood, price]);
 
   async function handleLogout() {
-    const { error } = await supabase.auth.signOut();
-    if (error) setError(error.message);
+    const { error: logoutError } = await supabase.auth.signOut();
+    if (logoutError) setError(logoutError.message);
+  }
+
+  function goToExplore() {
+    document.getElementById("explore")?.scrollIntoView({
+      behavior: "smooth"
+    });
   }
 
   return (
-    <main className="app-shell">
-      <nav className="navbar">
-        <a href="/" className="brand">CaféScape.</a>
+    <main className="cs-app">
+      <div className="cs-topline">
+        FIND YOUR SPACE. SIP YOUR MOMENT.
+      </div>
 
-        <div className="nav-actions">
+      <header className="cs-header">
+        <a className="cs-logo" href="#home">
+          <span className="cs-logo-mark"><Coffee size={19} /></span>
+          <span>CaféScape<span className="cs-logo-dot">.</span></span>
+        </a>
+
+        <nav className={`cs-nav ${mobileMenu ? "cs-nav-open" : ""}`}>
+          <a className="cs-nav-active" href="#home" onClick={() => setMobileMenu(false)}>Home</a>
+          <a href="#explore" onClick={() => setMobileMenu(false)}>Explore</a>
+          <a href="#about" onClick={() => setMobileMenu(false)}>About</a>
+        </nav>
+
+        <div className="cs-header-actions">
           {user ? (
             <>
-              <span>{user.email}</span>
-              <button onClick={handleLogout}>Logout</button>
+              <span className="cs-user-email">{user.email}</span>
+              <button className="cs-login-btn" onClick={handleLogout}>Logout</button>
             </>
           ) : (
-            <button onClick={() => setShowAuth(true)}>
-              Login / Sign up
+            <button className="cs-login-btn" onClick={() => setShowAuth(true)}>
+              Login / Sign up <ArrowUpRight size={15} />
             </button>
           )}
         </div>
-      </nav>
 
-      <section className="hero">
-        <p className="eyebrow">YOUR CITY, YOUR COFFEE</p>
-        <h1>Find your kind of café.</h1>
-        <p>Discover real cafés around you.</p>
+        <button
+          className="cs-mobile-toggle"
+          aria-label="Toggle navigation"
+          onClick={() => setMobileMenu(!mobileMenu)}
+        >
+          {mobileMenu ? <X /> : <Menu />}
+        </button>
+      </header>
 
-        <input
-          type="search"
-          placeholder="Search café, city or location..."
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
+      <section className="cs-hero" id="home">
+        <div className="cs-hero-copy">
+          <div className="cs-eyebrow">
+            <Sparkles size={14} />
+            YOUR LITTLE CORNER OF THE CITY
+          </div>
+
+          <h1>
+            Find your
+            <br />
+            <em>kind of</em> café.
+          </h1>
+
+          <p className="cs-hero-description">
+            Not just a coffee stop. Find a space that feels like you.
+            Discover cafés for slow mornings, deep focus and good conversations.
+          </p>
+
+          <button className="cs-primary-btn" onClick={goToExplore}>
+            Explore cafés <ArrowUpRight size={17} />
+          </button>
+
+          <div className="cs-hero-note">
+            <span className="cs-note-line" />
+            A better way to find your next favourite place.
+          </div>
+        </div>
+
+        <div className="cs-hero-visual">
+          <div className="cs-hero-image">
+            <div className="cs-image-overlay">
+              <span>THE CAFÉ EDIT</span>
+              <p>Make room for a little pause.</p>
+            </div>
+          </div>
+
+          <div className="cs-floating-card cs-floating-top">
+            <span className="cs-floating-icon"><Coffee size={17} /></span>
+            <span>
+              <strong>Your next coffee spot</strong>
+              <small>Waiting to be discovered</small>
+            </span>
+          </div>
+
+          <div className="cs-floating-card cs-floating-bottom">
+            <span className="cs-floating-number">01</span>
+            <span>
+              <strong>Find your atmosphere</strong>
+              <small>Cozy · Calm · Creative</small>
+            </span>
+          </div>
+
+          <span className="cs-hero-stamp">SIP SLOWLY<br />LIVE FULLY</span>
+        </div>
+
+        <div className="cs-hero-bottom">
+          <span>01 / DISCOVER</span>
+          <span>MADE FOR YOUR EVERYDAY ESCAPES</span>
+        </div>
       </section>
 
-      <section className="filters">
-        <label>
-          Mood
-          <select value={mood} onChange={(e) => setMood(e.target.value)}>
-            <option>All</option>
-            <option>Cozy</option>
-            <option>Study</option>
-            <option>Social</option>
-            <option>Romantic</option>
-            <option>Peaceful</option>
-          </select>
-        </label>
+      <section className="cs-discover" id="explore">
+        <div className="cs-section-heading">
+          <div>
+            <span className="cs-section-kicker">THE DISCOVERY ROOM</span>
+            <h2>Where will you <em>go today?</em></h2>
+            <p>Search for a place that matches your mood.</p>
+          </div>
+          <span className="cs-section-number">01 — 03</span>
+        </div>
 
-        <label>
-          Price
-          <select value={price} onChange={(e) => setPrice(e.target.value)}>
-            <option>All</option>
-            <option>₹</option>
-            <option>₹₹</option>
-            <option>₹₹₹</option>
-          </select>
-        </label>
-      </section>
+        <div className="cs-search-panel">
+          <div className="cs-search-input-wrap">
+            <Search size={19} />
+            <input
+              type="search"
+              placeholder="Search cafés, cities or locations..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
 
-      <section className="cafe-section">
-        <h2>Explore cafés</h2>
+          <div className="cs-search-divider" />
 
-        {loading && <p>Loading cafés...</p>}
-        {error && <p role="alert">{error}</p>}
+          <label className="cs-filter-select">
+            <span>PRICE</span>
+            <select value={price} onChange={(e) => setPrice(e.target.value)}>
+              <option value="All">Any budget</option>
+              <option value="₹">₹</option>
+              <option value="₹₹">₹₹</option>
+              <option value="₹₹₹">₹₹₹</option>
+            </select>
+          </label>
 
-        {!loading && !error && filteredCafes.length === 0 && (
-          <p>No approved cafés found yet.</p>
+          <button className="cs-search-button" onClick={goToExplore}>
+            Search <ArrowUpRight size={17} />
+          </button>
+        </div>
+
+        <div className="cs-mood-row">
+          <span className="cs-mood-label">I'M IN THE MOOD FOR</span>
+          <div className="cs-mood-options">
+            {moods.map((item) => (
+              <button
+                key={item}
+                className={`cs-mood-chip ${mood === item ? "selected" : ""}`}
+                onClick={() => setMood(item)}
+              >
+                {item}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="cs-results-heading">
+          <div>
+            <span className="cs-section-kicker">CURATED FOR YOUR NEXT ESCAPE</span>
+            <h3>Explore cafés<span>.</span></h3>
+          </div>
+          <span className="cs-results-count">
+            {filteredCafes.length} {filteredCafes.length === 1 ? "PLACE" : "PLACES"}
+          </span>
+        </div>
+
+        {loading && (
+          <div className="cs-empty-state">
+            <span className="cs-loader" />
+            <p>Finding cafés for you...</p>
+          </div>
         )}
 
-        <div className="cafe-grid">
-          {filteredCafes.map((cafe) => (
-            <article className="cafe-card" key={cafe.id}>
-              {cafe.cover_image_url ? (
-                <img
-                  src={cafe.cover_image_url}
-                  alt={cafe.name}
-                  className="cafe-image"
-                />
-              ) : (
-                <div className="cafe-image-placeholder">
-                  Image not uploaded
-                </div>
-              )}
+        {error && <p className="cs-error" role="alert">{error}</p>}
 
-              <div className="cafe-info">
-                <h3>{cafe.name}</h3>
-                <p>{cafe.location}, {cafe.city}</p>
-                {cafe.category && <p>{cafe.category}</p>}
-                {cafe.description && <p>{cafe.description}</p>}
-                {cafe.price_level && <p>{cafe.price_level}</p>}
-                {cafe.opening_hours && <p>{cafe.opening_hours}</p>}
-                <p>Crowd: {cafe.crowd_status}</p>
+        {!loading && !error && filteredCafes.length === 0 && (
+          <div className="cs-empty-state">
+            <Coffee size={30} />
+            <h4>No cafés to show just yet.</h4>
+            <p>
+              {cafes.length === 0
+                ? "Approved café listings will appear here when they are added."
+                : "Try changing your search or filters."}
+            </p>
+          </div>
+        )}
+
+        <div className="cs-cafe-grid">
+          {filteredCafes.map((cafe) => (
+            <article className="cs-cafe-card" key={cafe.id}>
+              <div className="cs-cafe-photo">
+                {cafe.cover_image_url ? (
+                  <img src={cafe.cover_image_url} alt={cafe.name} />
+                ) : (
+                  <div className="cs-no-photo">
+                    <Coffee size={26} />
+                    <span>PHOTO NOT ADDED</span>
+                  </div>
+                )}
+                {cafe.price_level && (
+                  <span className="cs-price-tag">{cafe.price_level}</span>
+                )}
+              </div>
+
+              <div className="cs-cafe-details">
+                <div className="cs-cafe-category">
+                  {cafe.category || "CAFÉ"}
+                </div>
+                <h4>{cafe.name}</h4>
+                <p className="cs-cafe-location">
+                  <MapPin size={13} />
+                  {cafe.location}, {cafe.city}
+                </p>
+                {cafe.description && (
+                  <p className="cs-cafe-description">{cafe.description}</p>
+                )}
+                <div className="cs-cafe-meta">
+                  {cafe.opening_hours && <span>{cafe.opening_hours}</span>}
+                  <span>{cafe.crowd_status}</span>
+                </div>
                 {cafe.mood_tags?.length > 0 && (
-                  <p>{cafe.mood_tags.join(" · ")}</p>
+                  <div className="cs-cafe-tags">
+                    {cafe.mood_tags.map((tag) => (
+                      <span key={tag}>{tag}</span>
+                    ))}
+                  </div>
                 )}
               </div>
             </article>
@@ -180,11 +342,29 @@ export default function App() {
         </div>
       </section>
 
+      <section className="cs-about" id="about">
+        <span className="cs-section-kicker">A LITTLE MORE THAN COFFEE</span>
+        <h2>Good places make<br /><em>good moments.</em></h2>
+        <p>
+          CaféScape helps you discover spaces worth stepping into.
+          Find your next quiet corner, creative hideaway or favourite table.
+        </p>
+      </section>
+
+      <footer className="cs-footer">
+        <a className="cs-logo" href="#home">
+          <span className="cs-logo-mark"><Coffee size={18} /></span>
+          <span>CaféScape<span className="cs-logo-dot">.</span></span>
+        </a>
+        <span>FIND YOUR SPACE. SIP YOUR MOMENT.</span>
+        <a href="#home">BACK TO TOP ↑</a>
+      </footer>
+
       {showAuth && (
-        <div className="auth-overlay">
+        <div className="cs-auth-overlay">
           <Auth onClose={() => setShowAuth(false)} />
         </div>
       )}
     </main>
   );
-                    }
+      }
