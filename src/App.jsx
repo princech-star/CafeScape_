@@ -277,7 +277,7 @@ export default function App() {
   full_name: authName,
   account_type: accountType,
 },
-          
+          },
         });
 
         if (error) throw error;
