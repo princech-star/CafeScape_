@@ -30,8 +30,15 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authMessage, setAuthMessage] = useState("");
   const [mobileMenu, setMobileMenu] = useState(false);
-  const [favorites, setFavorites] = useState([]);
 
+  // Saved cafés
+  const [favorites, setFavorites] = useState([]);
+  const [favoritesLoading, setFavoritesLoading] = useState(false);
+  const [favoriteBusy, setFavoriteBusy] = useState(null);
+  const [favoriteMessage, setFavoriteMessage] = useState("");
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+
+  // Load cafés and authentication session
   useEffect(() => {
     if (!supabase) {
       setLoading(false);
@@ -60,8 +67,15 @@ export default function App() {
 
     loadCafes();
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (active) setUser(data.session?.user || null);
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (!active) return;
+
+      if (error) {
+        console.error("Session error:", error.message);
+        return;
+      }
+
+      setUser(data.session?.user || null);
     });
 
     const {
@@ -76,6 +90,45 @@ export default function App() {
     };
   }, []);
 
+  // Load saved cafés whenever the logged-in user changes
+  useEffect(() => {
+    let active = true;
+
+    async function loadFavorites() {
+      if (!user || !supabase) {
+        setFavorites([]);
+        setFavoritesLoading(false);
+        return;
+      }
+
+      setFavoritesLoading(true);
+      setFavoriteMessage("");
+
+      const { data, error } = await supabase
+        .from("cafe_favorites")
+        .select("cafe_id")
+        .eq("user_id", user.id);
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Favorites loading error:", error.message);
+        setFavoriteMessage("Saved cafés could not be loaded. Please try again.");
+      } else {
+        setFavorites((data || []).map((item) => item.cafe_id));
+      }
+
+      setFavoritesLoading(false);
+    }
+
+    loadFavorites();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+
+  // Search and mood filters
   const filteredCafes = useMemo(() => {
     return cafes.filter((cafe) => {
       const searchText = search.toLowerCase();
@@ -95,9 +148,12 @@ export default function App() {
         selectedMood === "All" ||
         tags.includes(selectedMood.toLowerCase());
 
-      return matchesSearch && matchesMood;
+      const matchesFavorites =
+        !showFavoritesOnly || favorites.includes(cafe.id);
+
+      return matchesSearch && matchesMood && matchesFavorites;
     });
-  }, [cafes, search, selectedMood]);
+  }, [cafes, search, selectedMood, favorites, showFavoritesOnly]);
 
   function goToExplore() {
     document.getElementById("explore")?.scrollIntoView({
@@ -105,14 +161,65 @@ export default function App() {
     });
   }
 
-  function toggleFavorite(id) {
-    setFavorites((current) =>
-      current.includes(id)
-        ? current.filter((item) => item !== id)
-        : [...current, id]
-    );
+  // Save or remove a café from Supabase
+  async function toggleFavorite(id) {
+    if (!supabase) {
+      setFavoriteMessage("Saved cafés service is not configured.");
+      return;
+    }
+
+    if (!user) {
+      setAuthMode("login");
+      setAuthMessage("Please sign in to save your favourite cafés.");
+      setAuthOpen(true);
+      return;
+    }
+
+    if (favoriteBusy) return;
+
+    setFavoriteBusy(id);
+    setFavoriteMessage("");
+
+    const alreadySaved = favorites.includes(id);
+
+    try {
+      if (alreadySaved) {
+        const { error } = await supabase
+          .from("cafe_favorites")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("cafe_id", id);
+
+        if (error) throw error;
+
+        setFavorites((current) =>
+          current.filter((cafeId) => cafeId !== id)
+        );
+      } else {
+        const { error } = await supabase
+          .from("cafe_favorites")
+          .insert({
+            user_id: user.id,
+            cafe_id: id,
+          });
+
+        if (error) throw error;
+
+        setFavorites((current) =>
+          current.includes(id) ? current : [...current, id]
+        );
+      }
+    } catch (error) {
+      console.error("Favorite update error:", error.message);
+      setFavoriteMessage(
+        error.message || "Could not update saved café. Please try again."
+      );
+    } finally {
+      setFavoriteBusy(null);
+    }
   }
 
+  // Login and signup
   async function handleAuth(event) {
     event.preventDefault();
 
@@ -126,7 +233,7 @@ export default function App() {
 
     try {
       if (authMode === "signup") {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
           email: authEmail,
           password: authPassword,
           options: {
@@ -138,9 +245,16 @@ export default function App() {
 
         if (error) throw error;
 
-        setAuthMessage(
-          "Account created. You can now sign in if email confirmation is disabled."
-        );
+        if (data.session) {
+          setAuthOpen(false);
+          setAuthEmail("");
+          setAuthPassword("");
+          setAuthName("");
+        } else {
+          setAuthMessage(
+            "Account created! Please check your email and confirm your account before signing in."
+          );
+        }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email: authEmail,
@@ -152,6 +266,7 @@ export default function App() {
         setAuthOpen(false);
         setAuthEmail("");
         setAuthPassword("");
+        setAuthMessage("");
       }
     } catch (error) {
       setAuthMessage(error.message || "Something went wrong.");
@@ -166,7 +281,10 @@ export default function App() {
     const { error } = await supabase.auth.signOut();
 
     if (error) {
-      console.error(error.message);
+      console.error("Logout error:", error.message);
+    } else {
+      setShowFavoritesOnly(false);
+      setFavoriteMessage("");
     }
   }
 
@@ -181,7 +299,9 @@ export default function App() {
           <span className="cs-logo-icon">
             <Coffee size={20} />
           </span>
-          <span>CaféScape<span className="cs-logo-dot">.</span></span>
+          <span>
+            CaféScape<span className="cs-logo-dot">.</span>
+          </span>
         </a>
 
         <nav className={`cs-nav ${mobileMenu ? "cs-nav-open" : ""}`}>
@@ -291,7 +411,9 @@ export default function App() {
                 <span className="cs-eyebrow-dot" />
                 FIND YOUR SPACE
               </div>
-              <h2>Where shall we <em>go?</em></h2>
+              <h2>
+                Where shall we <em>go?</em>
+              </h2>
               <p>
                 A good café can change the mood of your whole day.
               </p>
@@ -336,15 +458,59 @@ export default function App() {
             </div>
           </div>
 
+          {/* All cafés / Saved cafés filter */}
+          <div className="cs-filter-row">
+            <span className="cs-filter-label">YOUR PLACES</span>
+            <div className="cs-mood-list">
+              <button
+                className={`cs-mood-chip ${
+                  !showFavoritesOnly ? "active" : ""
+                }`}
+                onClick={() => setShowFavoritesOnly(false)}
+              >
+                All cafés
+              </button>
+
+              <button
+                className={`cs-mood-chip ${
+                  showFavoritesOnly ? "active" : ""
+                }`}
+                onClick={() => {
+                  if (!user) {
+                    setAuthMode("login");
+                    setAuthMessage("Please sign in to view your saved cafés.");
+                    setAuthOpen(true);
+                    return;
+                  }
+
+                  setShowFavoritesOnly(true);
+                }}
+              >
+                <Heart size={14} />
+                Saved by you ({favorites.length})
+              </button>
+            </div>
+          </div>
+
           <div className="cs-results-heading">
-            <h3>Little places, big feelings.</h3>
+            <h3>
+              {showFavoritesOnly
+                ? "Your saved places."
+                : "Little places, big feelings."}
+            </h3>
             <span>
               {filteredCafes.length}{" "}
               {filteredCafes.length === 1 ? "place" : "places"} found
             </span>
           </div>
 
-          {loading ? (
+          {favoriteMessage && (
+            <p className="cs-auth-message" role="status">
+              {favoriteMessage}
+            </p>
+          )}
+
+          {loading || favoritesLoading ? (
             <div className="cs-empty-state">
               <Coffee size={30} />
               <h3>Finding your cafés...</h3>
@@ -373,7 +539,13 @@ export default function App() {
                         favorites.includes(cafe.id) ? "is-favorite" : ""
                       }`}
                       onClick={() => toggleFavorite(cafe.id)}
-                      aria-label="Save café"
+                      disabled={favoriteBusy === cafe.id}
+                      aria-label={
+                        favorites.includes(cafe.id)
+                          ? "Remove café from saved places"
+                          : "Save café"
+                      }
+                      aria-pressed={favorites.includes(cafe.id)}
                     >
                       <Heart
                         size={18}
@@ -441,12 +613,28 @@ export default function App() {
           ) : (
             <div className="cs-empty-state">
               <Coffee size={32} />
-              <h3>No cafés found just yet.</h3>
+              <h3>
+                {showFavoritesOnly
+                  ? "No saved cafés yet."
+                  : "No cafés found just yet."}
+              </h3>
               <p>
-                {cafes.length === 0
+                {showFavoritesOnly
+                  ? "Tap the heart on a café to save it here."
+                  : cafes.length === 0
                   ? "Approved cafés will appear here when they are added."
                   : "Try another search or choose a different vibe."}
               </p>
+
+              {showFavoritesOnly && (
+                <button
+                  className="cs-text-btn"
+                  onClick={() => setShowFavoritesOnly(false)}
+                >
+                  Explore all cafés
+                </button>
+              )}
+
               {(search || selectedMood !== "All") && (
                 <button
                   className="cs-text-btn"
@@ -496,114 +684,5 @@ export default function App() {
           <span className="cs-logo-icon">
             <Coffee size={20} />
           </span>
-          <span>CaféScape<span className="cs-logo-dot">.</span></span>
-        </a>
-
-        <p>Discover places. Find your pace.</p>
-
-        <span className="cs-footer-copy">
-          © {new Date().getFullYear()} CaféScape
-        </span>
-      </footer>
-
-      {authOpen && (
-        <div
-          className="cs-auth-overlay"
-          onClick={(event) => {
-            if (event.target === event.currentTarget) {
-              setAuthOpen(false);
-            }
-          }}
-        >
-          <div className="cs-auth-card">
-            <button
-              className="cs-auth-close"
-              onClick={() => setAuthOpen(false)}
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-
-            <div className="cs-auth-icon">
-              <Coffee size={25} />
-            </div>
-
-            <div className="cs-eyebrow">WELCOME TO CAFÉSCAPE</div>
-
-            <h2>
-              {authMode === "login" ? "Good to see you." : "Join our little world."}
-            </h2>
-
-            <p className="cs-auth-description">
-              {authMode === "login"
-                ? "Sign in to continue your café journey."
-                : "Create an account and start discovering."}
-            </p>
-
-            <form onSubmit={handleAuth} className="cs-auth-form">
-              {authMode === "signup" && (
-                <input
-                  type="text"
-                  placeholder="Your full name"
-                  value={authName}
-                  onChange={(event) => setAuthName(event.target.value)}
-                  required
-                />
-              )}
-
-              <input
-                type="email"
-                placeholder="Email address"
-                value={authEmail}
-                onChange={(event) => setAuthEmail(event.target.value)}
-                required
-              />
-
-              <input
-                type="password"
-                placeholder="Password (minimum 8 characters)"
-                value={authPassword}
-                onChange={(event) => setAuthPassword(event.target.value)}
-                minLength={8}
-                required
-              />
-
-              {authMessage && (
-                <p className="cs-auth-message">{authMessage}</p>
-              )}
-
-              <button
-                type="submit"
-                className="cs-primary-btn cs-auth-submit"
-                disabled={authLoading}
-              >
-                {authLoading
-                  ? "Please wait..."
-                  : authMode === "login"
-                  ? "Sign in"
-                  : "Create account"}
-                <ArrowUpRight size={18} />
-              </button>
-            </form>
-
-            <p className="cs-auth-switch">
-              {authMode === "login"
-                ? "New to CaféScape?"
-                : "Already have an account?"}{" "}
-              <button
-                onClick={() => {
-                  setAuthMode(
-                    authMode === "login" ? "signup" : "login"
-                  );
-                  setAuthMessage("");
-                }}
-              >
-                {authMode === "login" ? "Create account" : "Sign in"}
-              </button>
-            </p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-          }
+          <span>
+            CaféScape<span className="cs
