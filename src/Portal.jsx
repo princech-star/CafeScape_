@@ -342,8 +342,9 @@ export default function Portal({ user, role, onBack, onRefresh }) {
         <p>Loading dashboard...</p>
       ) : role === "cafe_owner" ? (
         <>
-          <section style={panelStyle}>
-            <h2>Register your café</h2>
+          {cafes.length === 0 && (
+  <section style={panelStyle}>
+    <h2>Register your café</h2>
             <p>Submit accurate café details for admin verification.</p>
 
             <form
@@ -459,6 +460,7 @@ export default function Portal({ user, role, onBack, onRefresh }) {
               </button>
             </form>
           </section>
+          )}
 
           <section style={panelStyle}>
             <h2>Your café applications</h2>
