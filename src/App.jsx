@@ -128,7 +128,42 @@ export default function App() {
       active = false;
     };
   }, [user]);
+  
 
+  // Load the logged-in user's role
+  useEffect(() => {
+    let active = true;
+
+    async function loadRole() {
+      if (!user || !supabase) {
+        setRole(null);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+
+      if (!active) return;
+
+      if (error) {
+        console.error("Role loading error:", error.message);
+        setRole(null);
+        return;
+      }
+
+      setRole(data.role);
+    }
+
+    loadRole();
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
+  
   // Search and mood filters
   const filteredCafes = useMemo(() => {
     return cafes.filter((cafe) => {
