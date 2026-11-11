@@ -376,6 +376,14 @@ export default function App() {
               Sign in
             </button>
           )}
+                    {user && (role === "admin" || role === "cafe_owner") && (
+            <button
+              className="cs-login-btn"
+              onClick={() => setPortalOpen(true)}
+            >
+              {role === "admin" ? "Admin Dashboard" : "Owner Dashboard"}
+            </button>
+          )}
 
           <button
             className="cs-mobile-toggle"
