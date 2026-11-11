@@ -769,35 +769,37 @@ export default function App() {
                 : "Create an account and start discovering."}
             </p>
 
-            <form onSubmit={handleAuth} className="cs-auth-form">
-              {authMode === "signup" && (
-                <input
-                  type="text"
-                  placeholder="Your full name"
-                  value={authName}
-                  onChange={(event) => setAuthName(event.target.value)}
-                  required
-                />
-          {authMode === "signup" && (
-  <select
-    value={accountType}
-    onChange={(event) => setAccountType(event.target.value)}
+            
+<form onSubmit={handleAuth} className="cs-auth-form">
+  {authMode === "signup" && (
+    <>
+      <input
+        type="text"
+        placeholder="Your full name"
+        value={authName}
+        onChange={(event) => setAuthName(event.target.value)}
+        required
+      />
+
+      <select
+        value={accountType}
+        onChange={(event) => setAccountType(event.target.value)}
+        required
+      >
+        <option value="customer">Customer account</option>
+        <option value="cafe_owner">Café Owner account</option>
+      </select>
+    </>
+  )}
+
+  <input
+    type="email"
+    placeholder="Email address"
+    value={authEmail}
+    onChange={(event) => setAuthEmail(event.target.value)}
     required
-  >
-    <option value="customer">Customer account</option>
-    <option value="cafe_owner">Café Owner account</option>
-  </select>
-)}
-              )}
-
-              <input
-                type="email"
-                placeholder="Email address"
-                value={authEmail}
-                onChange={(event) => setAuthEmail(event.target.value)}
-                required
-              />
-
+  />
+  
               <input
                 type="password"
                 placeholder="Password (minimum 8 characters)"
