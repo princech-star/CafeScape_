@@ -328,7 +328,28 @@ export default function App() {
       setFavoriteMessage("");
     }
   }
+  if (portalOpen) {
+    if (!user) {
+      return <div>Please sign in first.</div>;
+    }
 
+    if (!role) {
+      return <div>Loading your dashboard...</div>;
+    }
+
+    if (role !== "admin" && role !== "cafe_owner") {
+      return <div>Portal access is not available for this account.</div>;
+    }
+
+    return (
+      <Portal
+        user={user}
+        role={role}
+        onBack={() => setPortalOpen(false)}
+        onRefresh={() => window.location.reload()}
+      />
+    );
+  }
   return (
     <div className="cs-app">
       <div className="cs-topline">
