@@ -724,6 +724,7 @@ export default function Portal({ user, role, onBack, onRefresh }) {
       ))
   )}
 </section>
+  </>
       )}
     </main>
   );
