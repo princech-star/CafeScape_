@@ -614,10 +614,16 @@ export default function Portal({ user, role, onBack, onRefresh }) {
         <section style={panelStyle}>
           <h2>Café applications</h2>
 
-          {cafes.length === 0 ? (
-            <p>No café applications found.</p>
-          ) : (
-            cafes.map((cafe) => (
+{cafes.filter(
+  (cafe) => cafe.approval_status !== "approved"
+).length === 0 ? (
+  <p>No pending café applications found.</p>
+) : (
+  cafes
+    .filter((cafe) => cafe.approval_status !== "approved")
+    .map((cafe) => (
+      
+          
               <article
                 key={cafe.id}
                 style={{
