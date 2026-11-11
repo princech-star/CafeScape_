@@ -18,6 +18,10 @@ import { supabase } from "./lib/supabase";
 const moods = ["All", "Cozy", "Study", "Social", "Peaceful"];
 
 export default function App() {
+  const [role, setRole] = useState(null);
+  const [portalOpen, setPortalOpen] = useState(false);
+  const [accountType, setAccountType] = useState("customer");
+
   const [cafes, setCafes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
