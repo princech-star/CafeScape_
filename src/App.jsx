@@ -274,9 +274,10 @@ export default function App() {
           password: authPassword,
           options: {
             data: {
-              full_name: authName,
-            },
-          },
+  full_name: authName,
+  account_type: accountType,
+},
+          
         });
 
         if (error) throw error;
