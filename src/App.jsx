@@ -778,6 +778,16 @@ export default function App() {
                   onChange={(event) => setAuthName(event.target.value)}
                   required
                 />
+          {authMode === "signup" && (
+  <select
+    value={accountType}
+    onChange={(event) => setAccountType(event.target.value)}
+    required
+  >
+    <option value="customer">Customer account</option>
+    <option value="cafe_owner">Café Owner account</option>
+  </select>
+)}
               )}
 
               <input
