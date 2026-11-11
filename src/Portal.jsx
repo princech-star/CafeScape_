@@ -611,8 +611,9 @@ export default function Portal({ user, role, onBack, onRefresh }) {
           )}
         </>
       ) : (
-        <section style={panelStyle}>
-          <h2>Café applications</h2>
+  <>
+    <section style={panelStyle}>
+      <h2>Café applications</h2>
 
 {cafes.filter(
   (cafe) => cafe.approval_status !== "approved"
