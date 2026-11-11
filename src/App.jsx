@@ -685,4 +685,119 @@ export default function App() {
             <Coffee size={20} />
           </span>
           <span>
-            CaféScape<span className="cs
+            CaféScape<span className="cs-logo-dot">.</span>
+          </span>
+        </a>
+
+        <p>Discover places. Find your pace.</p>
+
+        <span className="cs-footer-copy">
+          © {new Date().getFullYear()} CaféScape
+        </span>
+      </footer>
+
+      {authOpen && (
+        <div
+          className="cs-auth-overlay"
+          onClick={(event) => {
+            if (event.target === event.currentTarget) {
+              setAuthOpen(false);
+            }
+          }}
+        >
+          <div className="cs-auth-card">
+            <button
+              className="cs-auth-close"
+              onClick={() => setAuthOpen(false)}
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+
+            <div className="cs-auth-icon">
+              <Coffee size={25} />
+            </div>
+
+            <div className="cs-eyebrow">WELCOME TO CAFÉSCAPE</div>
+
+            <h2>
+              {authMode === "login"
+                ? "Good to see you."
+                : "Join our little world."}
+            </h2>
+
+            <p className="cs-auth-description">
+              {authMode === "login"
+                ? "Sign in to continue your café journey."
+                : "Create an account and start discovering."}
+            </p>
+
+            <form onSubmit={handleAuth} className="cs-auth-form">
+              {authMode === "signup" && (
+                <input
+                  type="text"
+                  placeholder="Your full name"
+                  value={authName}
+                  onChange={(event) => setAuthName(event.target.value)}
+                  required
+                />
+              )}
+
+              <input
+                type="email"
+                placeholder="Email address"
+                value={authEmail}
+                onChange={(event) => setAuthEmail(event.target.value)}
+                required
+              />
+
+              <input
+                type="password"
+                placeholder="Password (minimum 8 characters)"
+                value={authPassword}
+                onChange={(event) => setAuthPassword(event.target.value)}
+                minLength={8}
+                required
+              />
+
+              {authMessage && (
+                <p className="cs-auth-message" role="status">
+                  {authMessage}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                className="cs-primary-btn cs-auth-submit"
+                disabled={authLoading}
+              >
+                {authLoading
+                  ? "Please wait..."
+                  : authMode === "login"
+                  ? "Sign in"
+                  : "Create account"}
+                <ArrowUpRight size={18} />
+              </button>
+            </form>
+
+            <p className="cs-auth-switch">
+              {authMode === "login"
+                ? "New to CaféScape?"
+                : "Already have an account?"}{" "}
+              <button
+                onClick={() => {
+                  setAuthMode(
+                    authMode === "login" ? "signup" : "login"
+                  );
+                  setAuthMessage("");
+                }}
+              >
+                {authMode === "login" ? "Create account" : "Sign in"}
+              </button>
+            </p>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
