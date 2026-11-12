@@ -237,6 +237,38 @@ async function updateMenuItem(item) {
 
   setBusy(false);
 }
+  async function editMenuItem(item) {
+  const itemName = window.prompt("Menu item name:", item.item_name);
+  if (itemName === null) return;
+
+  const price = window.prompt("Price in INR:", item.price);
+  if (price === null) return;
+
+  const description = window.prompt(
+    "Description:",
+    item.description || ""
+  );
+  if (description === null) return;
+
+  const category = window.prompt(
+    "Category:",
+    item.category || ""
+  );
+  if (category === null) return;
+
+  if (!itemName.trim() || price.trim() === "" || !Number.isFinite(Number(price)) || Number(price) < 0) {
+    setError("Please enter a valid item name and price.");
+    return;
+  }
+
+  await updateMenuItem({
+    ...item,
+    item_name: itemName.trim(),
+    price: Number(price),
+    description: description.trim() || null,
+    category: category.trim() || null,
+  });
+  }
   async function toggleAvailability(item) {
     const { error } = await supabase
       .from("cafe_menu_items")
